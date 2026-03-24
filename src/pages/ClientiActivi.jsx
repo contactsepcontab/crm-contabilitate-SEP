@@ -784,3 +784,4 @@ function InfoRow({ label, value, bold }) {
       <span className={`text-sm text-gray-800 ${bold ? "font-semibold" : ""}`}>{value}</span>
     </div>
   );
+}
