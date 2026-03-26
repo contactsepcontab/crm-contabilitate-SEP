@@ -8,6 +8,7 @@ import Rezilieri from "./pages/Rezilieri";
 import ContracteEmise from "./pages/ContracteEmise";
 import ImportClienti from "./pages/ImportClienti";
 import EmailMarketing from "./pages/EmailMarketing";
+import Taskuri from "./pages/Taskuri";
 import ComingSoon from "./pages/ComingSoon";
 
 const MODULES = [
@@ -40,6 +41,7 @@ const MODULES = [
     items: [
       { id: "leaduri", label: "Lead-uri", component: () => <ComingSoon title="Potentiali Clienti (Lead-uri)" description="Pipeline complet cu stadii clare. — Etapa 3" /> },
       { id: "email_marketing", label: "Email Marketing", component: EmailMarketing },
+      { id: "taskuri", label: "Taskuri & To-Do", component: Taskuri },
     ]
   },
   {
