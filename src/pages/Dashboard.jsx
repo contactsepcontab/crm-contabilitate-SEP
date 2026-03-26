@@ -41,10 +41,10 @@ export default function Dashboard() {
   if (loading) return <div className="p-6"><Loading /></div>;
 
   const StatCard = ({ label, value, sub, color, bgColor }) => (
-    <div className={`${bgColor || "bg-white"} rounded-2xl p-5 border border-gray-100 shadow-sm`}>
+    <div className={`${bgColor || "bg-white"} rounded-2xl p-5 border border-slate-100 `}>
       <div>
-        <p className="text-sm text-gray-500 mb-1">{label}</p>
-        <p className={`text-3xl font-bold ${color || "text-gray-900"}`}>{value}</p>
+        <p className="text-sm text-slate-400 mb-1">{label}</p>
+        <p className={`text-3xl font-bold ${color || "text-slate-800"}`}>{value}</p>
         {sub && <p className="text-xs text-gray-400 mt-1">{sub}</p>}
       </div>
     </div>
@@ -53,34 +53,34 @@ export default function Dashboard() {
   return (
     <div className="p-6">
       <div className="mb-6">
-        <h1 className="text-2xl font-bold text-gray-900">Dashboard</h1>
-        <p className="text-sm text-gray-500 mt-0.5">Bun venit în CRM-ul firmei tale de contabilitate</p>
+        <h1 className="text-2xl font-bold text-slate-800">Dashboard</h1>
+        <p className="text-sm text-slate-400 mt-0.5">Bun venit în CRM-ul firmei tale de contabilitate</p>
       </div>
 
       {/* Statistici principale */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
-        <StatCard label="Firme contabilitate" value={stats.firmeActive} sub={`din ${stats.firmeTotal} total`} color="text-indigo-700" />
-        <StatCard label="Clienți activi" value={stats.clientiActivi} sub={`din ${stats.clientiTotal} total`} color="text-green-700" />
-        <StatCard label="Firme suspendate ONRC" value={stats.firmeSuspendate} color="text-yellow-700" />
-        <StatCard label="Venit estimat lunar" value={`${stats.venitEstimat.toFixed(0)} RON`} sub="din clienți activi" color="text-blue-700" />
+        <StatCard label="Firme contabilitate" value={stats.firmeActive} sub={`din ${stats.firmeTotal} total`} color="text-primary-500" />
+        <StatCard label="Clienți activi" value={stats.clientiActivi} sub={`din ${stats.clientiTotal} total`} color="text-success-400" />
+        <StatCard label="Firme suspendate ONRC" value={stats.firmeSuspendate} color="text-warning-500" />
+        <StatCard label="Venit estimat lunar" value={`${stats.venitEstimat.toFixed(0)} RON`} sub="din clienți activi" color="text-accent-500" />
       </div>
 
       {/* Status clienti */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
-        <StatCard label="Activi" value={stats.clientiActivi} color="text-green-600" bgColor="bg-green-50" />
-        <StatCard label="Suspendați" value={stats.clientiSuspendati} color="text-yellow-600" bgColor="bg-yellow-50" />
-        <StatCard label="Reziliați" value={stats.clientiReziliati} color="text-red-600" bgColor="bg-red-50" />
-        <StatCard label="Prospecți" value={stats.clientiProspecti} color="text-blue-600" bgColor="bg-blue-50" />
+        <StatCard label="Activi" value={stats.clientiActivi} color="text-success-400" bgColor="bg-success-50" />
+        <StatCard label="Suspendați" value={stats.clientiSuspendati} color="text-warning-500" bgColor="bg-warning-50" />
+        <StatCard label="Reziliați" value={stats.clientiReziliati} color="text-danger-400" bgColor="bg-danger-50" />
+        <StatCard label="Prospecți" value={stats.clientiProspecti} color="text-accent-500" bgColor="bg-accent-50" />
       </div>
 
       {/* Servicii */}
-      <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-5 mb-6">
-        <h2 className="text-sm font-bold text-gray-700 mb-4">Distribuție servicii (clienți activi)</h2>
+      <div className="bg-white rounded-xl border border-slate-100  p-5 mb-6">
+        <h2 className="text-sm font-bold text-slate-600 mb-4">Distribuție servicii (clienți activi)</h2>
         <div className="grid grid-cols-2 lg:grid-cols-3 gap-4">
           {[
-            { label: "Plătitori TVA", value: stats.platitoriTVA, color: "bg-indigo-100 text-indigo-800" },
-            { label: "Cu serviciu HR", value: stats.cuHR, color: "bg-orange-100 text-orange-800" },
-            { label: "Cu bilanț anual", value: stats.cuBilant, color: "bg-green-100 text-green-800" },
+            { label: "Plătitori TVA", value: stats.platitoriTVA, color: "bg-primary-50 text-primary-500" },
+            { label: "Cu serviciu HR", value: stats.cuHR, color: "bg-warning-100 text-warning-600" },
+            { label: "Cu bilanț anual", value: stats.cuBilant, color: "bg-success-50 text-success-400" },
           ].map(s => (
             <div key={s.label} className={`${s.color} rounded-xl p-4`}>
               <p className="text-2xl font-bold">{s.value}</p>
@@ -91,14 +91,14 @@ export default function Dashboard() {
       </div>
 
       {/* Module in constructie */}
-      <div className="bg-amber-50 border border-amber-200 rounded-2xl p-5">
-        <h2 className="text-sm font-bold text-amber-800 mb-3">Module în construcție</h2>
+      <div className="bg-warning-50 border border-warning-200 rounded-2xl p-5">
+        <h2 className="text-sm font-bold text-warning-600 mb-3">Module în construcție</h2>
         <div className="grid grid-cols-2 lg:grid-cols-4 gap-2">
           {[
             "Firme Suspendate", "Rezilieri", "Contracte", "Șabloane",
             "Baza Clienți", "Documente Incomplete", "Lead-uri", "Utilizatori"
           ].map(m => (
-            <div key={m} className="bg-white rounded-lg px-3 py-2 text-xs text-amber-700 border border-amber-100 font-medium">
+            <div key={m} className="bg-white rounded-lg px-3 py-2 text-xs text-warning-500 border border-amber-100 font-medium">
               {m}
             </div>
           ))}
@@ -108,3 +108,4 @@ export default function Dashboard() {
     </div>
   );
 }
+
