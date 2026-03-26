@@ -240,4 +240,3 @@ export const BANCI = [
   "CEC Bank","Banca Transilvania","OTP Bank","Garanti BBVA","Libra Bank",
   "First Bank","Exim Banca","Patria Bank","TBI Bank","Alta banca"
 ];
-
