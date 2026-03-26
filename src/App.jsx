@@ -6,9 +6,12 @@ import BazaClienti from "./pages/BazaClienti";
 import FirmeSuspendate from "./pages/FirmeSuspendate";
 import Rezilieri from "./pages/Rezilieri";
 import ContracteEmise from "./pages/ContracteEmise";
-import ImportClienti from "./pages/ImportClienti";
+import DocumenteIncomplete from "./pages/DocumenteIncomplete";
+import Leaduri from "./pages/Leaduri";
 import EmailMarketing from "./pages/EmailMarketing";
 import Taskuri from "./pages/Taskuri";
+import ImportClienti from "./pages/ImportClienti";
+import Utilizatori from "./pages/Utilizatori";
 import ComingSoon from "./pages/ComingSoon";
 
 const MODULES = [
@@ -22,34 +25,39 @@ const MODULES = [
     section: "Firme & Clienti",
     items: [
       { id: "firme_contabilitate", label: "Firme Contabilitate", component: FirmeContabilitate },
-      { id: "clienti_activi", label: "Clienti Activi", component: ClientiActivi },
-      { id: "baza_clienti", label: "Baza Clienti", component: BazaClienti },
-      { id: "firme_suspendate", label: "Firme Suspendate", component: FirmeSuspendate },
-      { id: "rezilieri", label: "Rezilieri", component: Rezilieri },
+      { id: "clienti_activi",      label: "Clienti Activi",      component: ClientiActivi },
+      { id: "baza_clienti",        label: "Baza Clienti",        component: BazaClienti },
+      { id: "firme_suspendate",    label: "Firme Suspendate",    component: FirmeSuspendate },
+      { id: "rezilieri",           label: "Rezilieri",           component: Rezilieri },
     ]
   },
   {
     section: "Contracte & Documente",
     items: [
-      { id: "contracte_emise", label: "Contracte Emise", component: ContracteEmise },
-      { id: "sabloane", label: "Sabloane Contracte", component: () => <ComingSoon title="Sabloane & Drafturi" description="Modele de contracte care se completeaza automat cu datele clientului. — Etapa 3" /> },
-      { id: "doc_incomplete", label: "Doc. Incomplete", component: () => <ComingSoon title="Documente Incomplete" description="Alerta automata pentru clientii cu dosare incomplete. — Etapa 3" /> },
+      { id: "contracte_emise",     label: "Contracte Emise",     component: ContracteEmise },
+      { id: "sabloane",            label: "Sabloane Contracte",  component: () => <ComingSoon title="Sabloane & Drafturi" description="Completare automata + export PDF/Word. Disponibil in versiunea urmatoare." /> },
+      { id: "doc_incomplete",      label: "Doc. Incomplete",     component: DocumenteIncomplete },
     ]
   },
   {
     section: "Vanzari & Marketing",
     items: [
-      { id: "leaduri", label: "Lead-uri", component: () => <ComingSoon title="Potentiali Clienti (Lead-uri)" description="Pipeline complet cu stadii clare. — Etapa 3" /> },
-      { id: "email_marketing", label: "Email Marketing", component: EmailMarketing },
-      { id: "taskuri", label: "Taskuri & To-Do", component: Taskuri },
+      { id: "leaduri",             label: "Lead-uri",            component: Leaduri },
+      { id: "email_marketing",     label: "Email Marketing",     component: EmailMarketing },
+    ]
+  },
+  {
+    section: "Productivitate",
+    items: [
+      { id: "taskuri",             label: "Taskuri & To-Do",     component: Taskuri },
     ]
   },
   {
     section: "Administrare",
     items: [
-      { id: "import_clienti", label: "Import Clienti CSV", component: ImportClienti },
-      { id: "utilizatori", label: "Utilizatori", component: () => <ComingSoon title="Utilizatori & Drepturi" description="Roluri: Admin, Manager, Contabil, Operator. — Etapa 3" /> },
-      { id: "setari", label: "Setari", component: () => <ComingSoon title="Setari" /> },
+      { id: "import_clienti",      label: "Import Clienti CSV",  component: ImportClienti },
+      { id: "utilizatori",         label: "Utilizatori",         component: Utilizatori },
+      { id: "setari",              label: "Setari",              component: () => <ComingSoon title="Setari" description="Configurari generale ale aplicatiei." /> },
     ]
   }
 ];
@@ -87,7 +95,7 @@ export default function App() {
       </div>
 
       {/* Nav */}
-      <nav className="flex-1 overflow-y-auto py-3 px-2 space-y-1">
+      <nav className="flex-1 overflow-y-auto py-3 px-2">
         {MODULES.map(section => (
           <div key={section.section} className="mb-3">
             {!collapsed && (
@@ -137,13 +145,11 @@ export default function App() {
   return (
     <div className="min-h-screen bg-slate-100 flex">
       {/* Sidebar Desktop */}
-      <aside
-        className={`${collapsed ? "w-14" : "w-56"} bg-slate-900 flex-col transition-all duration-200 fixed h-full z-30 hidden md:flex`}
-      >
+      <aside className={`${collapsed ? "w-14" : "w-56"} bg-slate-900 flex-col transition-all duration-200 fixed h-full z-30 hidden md:flex`}>
         <SidebarContent />
       </aside>
 
-      {/* Sidebar Mobile Overlay */}
+      {/* Sidebar Mobile */}
       {mobileOpen && (
         <div className="fixed inset-0 z-40 md:hidden">
           <div className="fixed inset-0 bg-slate-900/70 backdrop-blur-sm" onClick={() => setMobileOpen(false)} />
@@ -155,16 +161,15 @@ export default function App() {
 
       {/* Main */}
       <main className={`flex-1 ${collapsed ? "md:ml-14" : "md:ml-56"} transition-all duration-200 min-h-screen`}>
-        {/* Mobile header */}
         <div className="md:hidden flex items-center gap-3 px-4 py-3 bg-white border-b border-slate-200 sticky top-0 z-20 shadow-sm">
-          <button onClick={() => setMobileOpen(true)} className="text-slate-600 font-bold text-lg w-8 h-8 flex items-center justify-center rounded-lg hover:bg-slate-100">
+          <button onClick={() => setMobileOpen(true)}
+            className="text-slate-600 font-bold text-lg w-8 h-8 flex items-center justify-center rounded-lg hover:bg-slate-100">
             ≡
           </button>
           <span className="font-bold text-slate-700 text-sm">
             {allItems.find(m => m.id === currentModule)?.label}
           </span>
         </div>
-
         <CurrentPage />
       </main>
     </div>
