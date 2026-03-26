@@ -6,6 +6,8 @@ import BazaClienti from "./pages/BazaClienti";
 import FirmeSuspendate from "./pages/FirmeSuspendate";
 import Rezilieri from "./pages/Rezilieri";
 import ContracteEmise from "./pages/ContracteEmise";
+import ImportClienti from "./pages/ImportClienti";
+import EmailMarketing from "./pages/EmailMarketing";
 import ComingSoon from "./pages/ComingSoon";
 
 const MODULES = [
@@ -29,20 +31,22 @@ const MODULES = [
     section: "Contracte & Documente",
     items: [
       { id: "contracte_emise", label: "Contracte Emise", component: ContracteEmise },
-      { id: "sabloane", label: "Sabloane Contracte", component: () => <ComingSoon title="Sabloane & Drafturi" description="Modele de contracte care se completeaza automat cu datele clientului. Export PDF si Word. — Etapa 3" /> },
+      { id: "sabloane", label: "Sabloane Contracte", component: () => <ComingSoon title="Sabloane & Drafturi" description="Modele de contracte care se completeaza automat cu datele clientului. — Etapa 3" /> },
       { id: "doc_incomplete", label: "Doc. Incomplete", component: () => <ComingSoon title="Documente Incomplete" description="Alerta automata pentru clientii cu dosare incomplete. — Etapa 3" /> },
     ]
   },
   {
-    section: "Vanzari",
+    section: "Vanzari & Marketing",
     items: [
-      { id: "leaduri", label: "Lead-uri", component: () => <ComingSoon title="Potentiali Clienti (Lead-uri)" description="Pipeline complet: Nou → Contactat → Ofertat → Negociere → Asteptare semnare → Castigat/Pierdut. — Etapa 3" /> },
+      { id: "leaduri", label: "Lead-uri", component: () => <ComingSoon title="Potentiali Clienti (Lead-uri)" description="Pipeline complet cu stadii clare. — Etapa 3" /> },
+      { id: "email_marketing", label: "Email Marketing", component: EmailMarketing },
     ]
   },
   {
     section: "Administrare",
     items: [
-      { id: "utilizatori", label: "Utilizatori", component: () => <ComingSoon title="Utilizatori & Drepturi" description="Gestionare utilizatori si roluri: Admin, Manager, Contabil, Operator. — Etapa 3" /> },
+      { id: "import_clienti", label: "Import Clienti CSV", component: ImportClienti },
+      { id: "utilizatori", label: "Utilizatori", component: () => <ComingSoon title="Utilizatori & Drepturi" description="Roluri: Admin, Manager, Contabil, Operator. — Etapa 3" /> },
       { id: "setari", label: "Setari", component: () => <ComingSoon title="Setari" /> },
     ]
   }
@@ -64,26 +68,28 @@ export default function App() {
 
   const SidebarContent = () => (
     <>
-      <div className={`flex items-center ${collapsed ? "justify-center" : "justify-between"} px-4 py-4 border-b border-slate-700`}>
+      {/* Logo */}
+      <div className={`flex items-center ${collapsed ? "justify-center" : "justify-between"} px-4 py-4 border-b border-slate-700/60`}>
         {!collapsed && (
           <div>
-            <p className="text-white font-bold text-sm">SEP CRM</p>
-            <p className="text-slate-400 text-xs">Contabilitate</p>
+            <p className="text-white font-bold text-sm tracking-tight">SEP CRM</p>
+            <p className="text-slate-400 text-xs mt-0.5">Contabilitate</p>
           </div>
         )}
         <button
           onClick={() => setCollapsed(!collapsed)}
-          className="text-slate-400 hover:text-white w-8 h-8 flex items-center justify-center rounded-lg hover:bg-slate-700 transition-colors font-bold"
+          className="text-slate-500 hover:text-white w-7 h-7 flex items-center justify-center rounded-lg hover:bg-slate-700 transition-all font-bold text-sm"
         >
           {collapsed ? "›" : "‹"}
         </button>
       </div>
 
-      <nav className="flex-1 overflow-y-auto py-3 px-2">
+      {/* Nav */}
+      <nav className="flex-1 overflow-y-auto py-3 px-2 space-y-1">
         {MODULES.map(section => (
-          <div key={section.section} className="mb-4">
+          <div key={section.section} className="mb-3">
             {!collapsed && (
-              <p className="text-slate-500 text-xs font-semibold uppercase tracking-wider px-3 mb-1">
+              <p className="text-slate-500 text-[10px] font-bold uppercase tracking-widest px-3 mb-1.5 mt-2">
                 {section.section}
               </p>
             )}
@@ -91,16 +97,16 @@ export default function App() {
               <button
                 key={item.id}
                 onClick={() => navigate(item.id)}
-                className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-lg mb-0.5 text-sm transition-colors ${
+                className={`w-full flex items-center gap-2.5 px-3 py-2 rounded-lg mb-0.5 text-sm font-medium transition-all ${
                   currentModule === item.id
-                    ? "bg-indigo-600 text-white"
-                    : "text-slate-400 hover:bg-slate-700/50 hover:text-white"
+                    ? "bg-primary-500 text-white shadow-sm"
+                    : "text-slate-400 hover:bg-slate-700/40 hover:text-slate-100"
                 }`}
                 title={collapsed ? item.label : ""}
               >
                 {collapsed ? (
-                  <span className="text-xs font-bold w-5 text-center flex-shrink-0">
-                    {item.label.charAt(0)}
+                  <span className="text-[11px] font-bold w-5 text-center flex-shrink-0 tracking-tight">
+                    {item.label.slice(0, 2)}
                   </span>
                 ) : (
                   <span className="truncate">{item.label}</span>
@@ -111,11 +117,15 @@ export default function App() {
         ))}
       </nav>
 
+      {/* Footer */}
       {!collapsed && (
-        <div className="p-3 border-t border-slate-700">
-          <div className="bg-slate-700/50 rounded-lg p-3">
-            <p className="text-xs text-slate-400">Firebase conectat</p>
-            <p className="text-xs text-slate-500 mt-0.5">sep-crm-contabilitate</p>
+        <div className="p-3 border-t border-slate-700/60">
+          <div className="bg-slate-700/30 rounded-lg p-3">
+            <div className="flex items-center gap-2">
+              <div className="w-2 h-2 bg-success-400 rounded-full"></div>
+              <p className="text-xs text-slate-300 font-medium">Firebase conectat</p>
+            </div>
+            <p className="text-xs text-slate-500 mt-0.5 ml-4">sep-crm-contabilitate</p>
           </div>
         </div>
       )}
@@ -123,26 +133,32 @@ export default function App() {
   );
 
   return (
-    <div className="min-h-screen bg-slate-50 flex">
+    <div className="min-h-screen bg-slate-100 flex">
+      {/* Sidebar Desktop */}
       <aside
-        className={`${collapsed ? "w-16" : "w-60"} bg-slate-900 flex-col transition-all duration-200 fixed h-full z-30 hidden md:flex`}
+        className={`${collapsed ? "w-14" : "w-56"} bg-slate-900 flex-col transition-all duration-200 fixed h-full z-30 hidden md:flex`}
       >
         <SidebarContent />
       </aside>
 
+      {/* Sidebar Mobile Overlay */}
       {mobileOpen && (
         <div className="fixed inset-0 z-40 md:hidden">
-          <div className="fixed inset-0 bg-black/60" onClick={() => setMobileOpen(false)} />
-          <aside className="fixed left-0 top-0 h-full w-64 bg-slate-900 flex flex-col z-50">
+          <div className="fixed inset-0 bg-slate-900/70 backdrop-blur-sm" onClick={() => setMobileOpen(false)} />
+          <aside className="fixed left-0 top-0 h-full w-56 bg-slate-900 flex flex-col z-50">
             <SidebarContent />
           </aside>
         </div>
       )}
 
-      <main className={`flex-1 ${collapsed ? "md:ml-16" : "md:ml-60"} transition-all duration-200 min-h-screen`}>
-        <div className="md:hidden flex items-center gap-3 px-4 py-3 bg-white border-b border-gray-200 sticky top-0 z-20">
-          <button onClick={() => setMobileOpen(true)} className="text-gray-600 font-bold text-lg">≡</button>
-          <span className="font-bold text-gray-800">
+      {/* Main */}
+      <main className={`flex-1 ${collapsed ? "md:ml-14" : "md:ml-56"} transition-all duration-200 min-h-screen`}>
+        {/* Mobile header */}
+        <div className="md:hidden flex items-center gap-3 px-4 py-3 bg-white border-b border-slate-200 sticky top-0 z-20 shadow-sm">
+          <button onClick={() => setMobileOpen(true)} className="text-slate-600 font-bold text-lg w-8 h-8 flex items-center justify-center rounded-lg hover:bg-slate-100">
+            ≡
+          </button>
+          <span className="font-bold text-slate-700 text-sm">
             {allItems.find(m => m.id === currentModule)?.label}
           </span>
         </div>
