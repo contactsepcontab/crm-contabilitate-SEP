@@ -24,10 +24,32 @@ const CAT_DOCUMENTE_CLIENT = [
   "Certificat înregistrare",
   "Act constitutiv",
   "CI administrator",
+  "CI asociat",
   "Dovadă sediu",
   "Certificat TVA",
   "Documente punct de lucru",
   "Procură",
+  "Contract contabilitate",
+  "Contract HR",
+  "Contract bilanț",
+  "AA Majorare tarif",
+  "AA Micșorare tarif",
+  "AA Bilanț",
+  "AA Reziliere contabilitate",
+  "AA Reziliere HR",
+  "AA Reziliere unilaterală",
+  "Notificare neplată",
+  "Alte documente",
+];
+  "Contract HR",
+  "Contract bilanț",
+  "AA Majorare tarif",
+  "AA Micșorare tarif",
+  "AA Bilanț",
+  "AA Reziliere contabilitate",
+  "AA Reziliere HR",
+  "AA Reziliere unilaterală",
+  "Notificare neplată",
   "Alte documente",
 ];
 
@@ -50,7 +72,15 @@ const EMPTY_FORM = {
   judet: "", localitate: "", strada: "", numar: "", bloc: "", scara: "",
   apartament: "", cod_postal: "",
   administrator_nume: "", administrator_cnp: "", administrator_ci_serie: "",
-  administrator_ci_numar: "", administrator_telefon: "", administrator_email: "",
+  administrator_nume: "", administrator_cnp: "", administrator_ci_serie: "",
+  administrator_ci_numar: "", administrator_ci_expirare: "",
+  administrator_telefon: "", administrator_email: "",
+  asociat1_nume: "", asociat1_cnp: "", asociat1_ci_serie: "",
+  asociat1_ci_numar: "", asociat1_ci_expirare: "",
+  asociat1_telefon: "", asociat1_email: "",
+  asociat2_nume: "", asociat2_cnp: "", asociat2_ci_serie: "",
+  asociat2_ci_numar: "", asociat2_ci_expirare: "",
+  asociat2_telefon: "", asociat2_email: "",
   persoana_contact_nume: "", persoana_contact_functie: "",
   persoana_contact_telefon: "", persoana_contact_email: "",
   telefon_secundar: "", email_secundar: "",
@@ -150,23 +180,26 @@ export default function ClientiActivi() {
   };
 
   const handleAddDoc = async () => {
-    if (!docForm.categorie || !docForm.denumire) return alert("Completează categoria și denumirea!");
+    if (!docForm.categorie) return alert("Selectează categoria documentului!");
+    if (!docForm.denumire) return alert("Completează denumirea documentului!");
+    if (!selectedClient?.id) return alert("Eroare: niciun client selectat.");
     try {
-      const client = clienti.find(c => c.id === selectedClient.id);
-      const documente = [...(client.documente || []), {
+      const docNou = {
         ...docForm,
-        data_adaugare: new Date().toISOString().split("T")[0],
         id: Date.now().toString(),
-      }];
+        data_adaugare: new Date().toISOString().split("T")[0],
+      };
+      const documente = [...(selectedClient.documente || []), docNou];
       await updateDoc(doc(db, "clienti", selectedClient.id), { documente });
-      await reload();
-      const updated = (await getDocs(collection(db, "clienti"))).docs
-        .map(d => ({ ...d.data(), id: d.id }))
-        .find(c => c.id === selectedClient.id);
-      setSelectedClient(updated);
+      const clientActualizat = { ...selectedClient, documente };
+      setSelectedClient(clientActualizat);
+      setClienti(prev => prev.map(c => c.id === selectedClient.id ? clientActualizat : c));
       setDocForm({ categorie: "", denumire: "", observatii: "" });
       setDocModal(false);
-    } catch (e) { alert("Eroare: " + e.message); }
+    } catch (e) {
+      alert("Eroare la salvare document: " + e.message);
+      console.error(e);
+    }
   };
 
   const f = (field) => form[field] ?? "";
@@ -451,11 +484,62 @@ export default function ClientiActivi() {
             <FormField label="CI Număr">
               <Input value={f("administrator_ci_numar")} onChange={set("administrator_ci_numar")} />
             </FormField>
+            <FormField label="CI Dată expirare">
+              <Input type="date" value={f("administrator_ci_expirare")} onChange={set("administrator_ci_expirare")} />
+            </FormField>
             <FormField label="Telefon">
               <Input value={f("administrator_telefon")} onChange={set("administrator_telefon")} />
             </FormField>
             <FormField label="Email">
               <Input type="email" value={f("administrator_email")} onChange={set("administrator_email")} />
+            </FormField>
+          </FormSection>
+
+          <FormSection title="Asociat 1 (opțional)">
+            <FormField label="Nume complet">
+              <Input value={f("asociat1_nume")} onChange={set("asociat1_nume")} placeholder="Lăsați gol dacă nu există" />
+            </FormField>
+            <FormField label="CNP">
+              <Input value={f("asociat1_cnp")} onChange={set("asociat1_cnp")} />
+            </FormField>
+            <FormField label="CI Serie">
+              <Input value={f("asociat1_ci_serie")} onChange={set("asociat1_ci_serie")} />
+            </FormField>
+            <FormField label="CI Număr">
+              <Input value={f("asociat1_ci_numar")} onChange={set("asociat1_ci_numar")} />
+            </FormField>
+            <FormField label="CI Dată expirare">
+              <Input type="date" value={f("asociat1_ci_expirare")} onChange={set("asociat1_ci_expirare")} />
+            </FormField>
+            <FormField label="Telefon">
+              <Input value={f("asociat1_telefon")} onChange={set("asociat1_telefon")} />
+            </FormField>
+            <FormField label="Email">
+              <Input type="email" value={f("asociat1_email")} onChange={set("asociat1_email")} />
+            </FormField>
+          </FormSection>
+
+          <FormSection title="Asociat 2 (opțional)">
+            <FormField label="Nume complet">
+              <Input value={f("asociat2_nume")} onChange={set("asociat2_nume")} placeholder="Lăsați gol dacă nu există" />
+            </FormField>
+            <FormField label="CNP">
+              <Input value={f("asociat2_cnp")} onChange={set("asociat2_cnp")} />
+            </FormField>
+            <FormField label="CI Serie">
+              <Input value={f("asociat2_ci_serie")} onChange={set("asociat2_ci_serie")} />
+            </FormField>
+            <FormField label="CI Număr">
+              <Input value={f("asociat2_ci_numar")} onChange={set("asociat2_ci_numar")} />
+            </FormField>
+            <FormField label="CI Dată expirare">
+              <Input type="date" value={f("asociat2_ci_expirare")} onChange={set("asociat2_ci_expirare")} />
+            </FormField>
+            <FormField label="Telefon">
+              <Input value={f("asociat2_telefon")} onChange={set("asociat2_telefon")} />
+            </FormField>
+            <FormField label="Email">
+              <Input type="email" value={f("asociat2_email")} onChange={set("asociat2_email")} />
             </FormField>
           </FormSection>
 
@@ -643,6 +727,7 @@ export default function ClientiActivi() {
                 <InfoRow label="Nume" value={selectedClient.administrator_nume} bold />
                 <InfoRow label="CNP" value={selectedClient.administrator_cnp} />
                 <InfoRow label="CI" value={`${selectedClient.administrator_ci_serie || ""} ${selectedClient.administrator_ci_numar || ""}`.trim()} />
+                <InfoRow label="CI expiră" value={selectedClient.administrator_ci_expirare} />
                 <InfoRow label="Telefon" value={selectedClient.administrator_telefon} />
                 <InfoRow label="Email" value={selectedClient.administrator_email} />
               </InfoCard>
@@ -654,6 +739,26 @@ export default function ClientiActivi() {
                 <InfoRow label="Telefon 2" value={selectedClient.telefon_secundar} />
                 <InfoRow label="Email 2" value={selectedClient.email_secundar} />
               </InfoCard>
+              {selectedClient.asociat1_nume && (
+                <InfoCard title="Asociat 1">
+                  <InfoRow label="Nume" value={selectedClient.asociat1_nume} bold />
+                  <InfoRow label="CNP" value={selectedClient.asociat1_cnp} />
+                  <InfoRow label="CI" value={`${selectedClient.asociat1_ci_serie || ""} ${selectedClient.asociat1_ci_numar || ""}`.trim()} />
+                  <InfoRow label="CI expiră" value={selectedClient.asociat1_ci_expirare} />
+                  <InfoRow label="Telefon" value={selectedClient.asociat1_telefon} />
+                  <InfoRow label="Email" value={selectedClient.asociat1_email} />
+                </InfoCard>
+              )}
+              {selectedClient.asociat2_nume && (
+                <InfoCard title="Asociat 2">
+                  <InfoRow label="Nume" value={selectedClient.asociat2_nume} bold />
+                  <InfoRow label="CNP" value={selectedClient.asociat2_cnp} />
+                  <InfoRow label="CI" value={`${selectedClient.asociat2_ci_serie || ""} ${selectedClient.asociat2_ci_numar || ""}`.trim()} />
+                  <InfoRow label="CI expiră" value={selectedClient.asociat2_ci_expirare} />
+                  <InfoRow label="Telefon" value={selectedClient.asociat2_telefon} />
+                  <InfoRow label="Email" value={selectedClient.asociat2_email} />
+                </InfoCard>
+              )}
             </div>
           )}
 
