@@ -176,8 +176,12 @@ export default function BazaClienti() {
 
   // Date imbogatite cu contracte
   const clientiCuContracte = clienti.map(c => {
-    const ctrActive = contracte.filter(ctr => ctr.client_id === c.id && ctr.status_contract === "Activ");
-    const ctr = ctrActive[0] || null;
+    const toateCtr = contracte.filter(ctr => ctr.client_id === c.id);
+    const ctr = toateCtr.find(ctr => ctr.status_contract === "Activ")
+      || toateCtr.find(ctr => ctr.status_contract === "Trimis spre semnare")
+      || toateCtr.find(ctr => ctr.status_contract === "Draft")
+      || toateCtr[0]
+      || null;
     return {
       ...c,
       _nr_contract: ctr?.numar_contract || "",
@@ -812,3 +816,4 @@ export default function BazaClienti() {
     </div>
   );
 }
+
