@@ -11,10 +11,13 @@ import {
 const TIP_CONTRACT = [
   "Contabilitate",
   "Bilant",
+  "Doar bilant",
   "Resurse umane (HR)",
   "Consultanta",
   "Salarizare",
   "Contabilitate + Bilant",
+  "Contabilitate + HR",
+  "Contabilitate + Bilant + HR",
   "Altul",
 ];
 
@@ -38,7 +41,12 @@ const EMPTY_FORM = {
   termen_plata: "15",
   servicii_incluse: "",
   status_contract: "Draft",
+  prima_luna_lucrata: "",
+  prima_luna_contabil: "",
   ultima_luna_lucrata: "",
+  are_bilant: false,
+  tarif_bilant: "",
+  moneda_bilant: "RON",
   observatii: "",
 };
 
@@ -312,7 +320,16 @@ export default function ContracteEmise() {
             </FormField>
           </FormSection>
 
-          <FormSection title="Servicii si observatii">
+          <FormSection title="Date contabile">
+            <FormField label="Prima lună lucrată (general)">
+              <Input value={f("prima_luna_lucrata")} onChange={set("prima_luna_lucrata")} placeholder="Ex: Ianuarie 2025" />
+            </FormField>
+            <FormField label="Prima lună lucrată (din punct de vedere contabil)">
+              <Input value={f("prima_luna_contabil")} onChange={set("prima_luna_contabil")} placeholder="Ex: Februarie 2025 (poate diferi)" />
+            </FormField>
+            <FormField label="Ultima lună lucrată">
+              <Input value={f("ultima_luna_lucrata")} onChange={set("ultima_luna_lucrata")} placeholder="Ex: Decembrie 2024" />
+            </FormField>
             <FormField label="Servicii incluse" full>
               <textarea
                 className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm bg-gray-50 focus:outline-none focus:ring-2 focus:ring-indigo-400 resize-none"
@@ -321,9 +338,6 @@ export default function ContracteEmise() {
                 onChange={set("servicii_incluse")}
                 placeholder="Descriere servicii incluse în contract..."
               />
-            </FormField>
-            <FormField label="Ultima luna lucrata">
-              <Input value={f("ultima_luna_lucrata")} onChange={set("ultima_luna_lucrata")} placeholder="Ex: Decembrie 2024" />
             </FormField>
             <FormField label="Observatii" full>
               <textarea
@@ -334,6 +348,26 @@ export default function ContracteEmise() {
               />
             </FormField>
           </FormSection>
+
+          {(form.tip_contract === "Bilant" || form.tip_contract === "Doar bilant" || form.tip_contract?.includes("Bilant") || form.are_bilant) && (
+            <FormSection title="Tarifare bilanț anual (opțional)">
+              <FormField label="Tarif bilanț (RON/an)">
+                <Input type="number" value={f("tarif_bilant")} onChange={set("tarif_bilant")} placeholder="0" />
+              </FormField>
+              <FormField label="Monedă bilanț">
+                <Select value={f("moneda_bilant")} onChange={set("moneda_bilant")} options={[{value:"RON",label:"RON"},{value:"EUR",label:"EUR"}]} />
+              </FormField>
+            </FormSection>
+          )}
+
+          {!form.tip_contract?.includes("Bilant") && form.tip_contract !== "Bilant" && form.tip_contract !== "Doar bilant" && (
+            <div className="mb-4 p-3 bg-gray-50 rounded-xl border border-gray-100">
+              <label className="flex items-center gap-2 cursor-pointer">
+                <input type="checkbox" checked={!!form.are_bilant} onChange={e => setForm(p => ({...p, are_bilant: e.target.checked}))} className="w-4 h-4 rounded" />
+                <span className="text-sm font-medium text-gray-700">Adaugă și tarif de bilanț anual la acest contract</span>
+              </label>
+            </div>
+          )}
 
           <div className="flex justify-end gap-3 pt-2 border-t border-gray-100 mt-4">
             <Btn variant="secondary" onClick={() => setModal(null)}>Anulează</Btn>
@@ -383,7 +417,10 @@ export default function ContracteEmise() {
                 <VInfoRow label="Tarif" value={selected.tarif ? `${selected.tarif} ${selected.moneda}` : null} />
                 <VInfoRow label="Periodicitate" value={selected.periodicitate_facturare} />
                 <VInfoRow label="Termen plata" value={selected.termen_plata ? `${selected.termen_plata} zile` : null} />
-                <VInfoRow label="Ultima luna lucrata" value={selected.ultima_luna_lucrata} />
+                <VInfoRow label="Prima lună lucrată" value={selected.prima_luna_lucrata} />
+                <VInfoRow label="Prima lună (contabil)" value={selected.prima_luna_contabil} />
+                <VInfoRow label="Ultima lună lucrată" value={selected.ultima_luna_lucrata} />
+                {selected.tarif_bilant && <VInfoRow label="Tarif bilanț" value={`${selected.tarif_bilant} ${selected.moneda_bilant || "RON"}/an`} />}
               </div>
               {(selected.servicii_incluse || selected.observatii) && (
                 <div className="col-span-2 bg-gray-50 rounded-xl p-4 space-y-2">
