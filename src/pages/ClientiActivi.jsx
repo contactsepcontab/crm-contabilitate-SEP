@@ -41,17 +41,6 @@ const CAT_DOCUMENTE_CLIENT = [
   "Notificare neplată",
   "Alte documente",
 ];
-  "Contract HR",
-  "Contract bilanț",
-  "AA Majorare tarif",
-  "AA Micșorare tarif",
-  "AA Bilanț",
-  "AA Reziliere contabilitate",
-  "AA Reziliere HR",
-  "AA Reziliere unilaterală",
-  "Notificare neplată",
-  "Alte documente",
-];
 
 const EMPTY_FORM = {
   tip_entitate: "SRL", denumire: "", denumire_comerciala: "", cui: "",
