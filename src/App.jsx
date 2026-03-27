@@ -13,6 +13,7 @@ import Taskuri from "./pages/Taskuri";
 import ImportClienti from "./pages/ImportClienti";
 import Utilizatori from "./pages/Utilizatori";
 import ComingSoon from "./pages/ComingSoon";
+import Sabloane from "./pages/Sabloane";
 
 const MODULES = [
   {
@@ -35,7 +36,7 @@ const MODULES = [
     section: "Contracte & Documente",
     items: [
       { id: "contracte_emise",     label: "Contracte Emise",     component: ContracteEmise },
-      { id: "sabloane",            label: "Sabloane Contracte",  component: () => <ComingSoon title="Sabloane & Drafturi" description="Completare automata + export PDF/Word. Disponibil in versiunea urmatoare." /> },
+      { id: "sabloane",            label: "Sabloane Contracte",  component: Sabloane },
       { id: "doc_incomplete",      label: "Doc. Incomplete",     component: DocumenteIncomplete },
     ]
   },
