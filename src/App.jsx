@@ -1,4 +1,7 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import { onAuthStateChanged, signOut } from "firebase/auth";
+import { auth } from "./firebase";
+import Login from "./pages/Login";
 import Dashboard from "./pages/Dashboard";
 import FirmeContabilitate from "./pages/FirmeContabilitate";
 import ClientiActivi from "./pages/ClientiActivi";
@@ -14,6 +17,7 @@ import ImportClienti from "./pages/ImportClienti";
 import Utilizatori from "./pages/Utilizatori";
 import ComingSoon from "./pages/ComingSoon";
 import Sabloane from "./pages/Sabloane";
+import SabloanePersonalizate from "./pages/SabloanePersonalizate";
 
 const MODULES = [
   {
@@ -37,6 +41,7 @@ const MODULES = [
     items: [
       { id: "contracte_emise",     label: "Contracte Emise",     component: ContracteEmise },
       { id: "sabloane",            label: "Sabloane Contracte",  component: Sabloane },
+      { id: "sabloane_custom",      label: "Sabloane Personalizate", component: SabloanePersonalizate },
       { id: "doc_incomplete",      label: "Doc. Incomplete",     component: DocumenteIncomplete },
     ]
   },
@@ -69,8 +74,32 @@ export default function App() {
   const [currentModule, setCurrentModule] = useState("dashboard");
   const [collapsed, setCollapsed] = useState(false);
   const [mobileOpen, setMobileOpen] = useState(false);
+  const [user, setUser] = useState(null);
+  const [authLoading, setAuthLoading] = useState(true);
+
+  useEffect(() => {
+    const unsubscribe = onAuthStateChanged(auth, (u) => {
+      setUser(u);
+      setAuthLoading(false);
+    });
+    return unsubscribe;
+  }, []);
+
+  if (authLoading) {
+    return (
+      <div className="min-h-screen bg-slate-900 flex items-center justify-center">
+        <div className="text-center">
+          <div className="w-10 h-10 border-4 border-slate-600 border-t-primary-400 rounded-full animate-spin mx-auto mb-3"></div>
+          <p className="text-slate-400 text-sm">Se încarcă...</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (!user) return <Login />;
 
   const CurrentPage = allItems.find(m => m.id === currentModule)?.component || Dashboard;
+  const currentUserEmail = user?.email || "";
 
   const navigate = (id) => {
     setCurrentModule(id);
@@ -128,18 +157,36 @@ export default function App() {
         ))}
       </nav>
 
-      {/* Footer */}
-      {!collapsed && (
-        <div className="p-3 border-t border-slate-700/60">
-          <div className="bg-slate-700/30 rounded-lg p-3">
-            <div className="flex items-center gap-2">
-              <div className="w-2 h-2 bg-success-400 rounded-full"></div>
-              <p className="text-xs text-slate-300 font-medium">Firebase conectat</p>
+      {/* Footer cu user + logout */}
+      <div className="p-3 border-t border-slate-700/60">
+        {!collapsed ? (
+          <div className="bg-slate-700/30 rounded-xl p-3">
+            <div className="flex items-center gap-2 mb-2">
+              <div className="w-7 h-7 bg-primary-500 rounded-full flex items-center justify-center text-white text-xs font-bold flex-shrink-0">
+                {user?.email?.charAt(0).toUpperCase()}
+              </div>
+              <div className="min-w-0">
+                <p className="text-xs text-slate-200 font-medium truncate">{user?.email}</p>
+                <p className="text-[10px] text-slate-500">Conectat</p>
+              </div>
             </div>
-            <p className="text-xs text-slate-500 mt-0.5 ml-4">sep-crm-contabilitate</p>
+            <button
+              onClick={() => signOut(auth)}
+              className="w-full text-xs text-slate-400 hover:text-white hover:bg-slate-600/50 rounded-lg py-1.5 transition-colors font-medium"
+            >
+              Deconectare
+            </button>
           </div>
-        </div>
-      )}
+        ) : (
+          <button
+            onClick={() => signOut(auth)}
+            title="Deconectare"
+            className="w-full flex items-center justify-center py-2 text-slate-400 hover:text-white hover:bg-slate-700/50 rounded-lg transition-colors"
+          >
+            <span className="text-sm">⏻</span>
+          </button>
+        )}
+      </div>
     </>
   );
 
@@ -171,7 +218,7 @@ export default function App() {
             {allItems.find(m => m.id === currentModule)?.label}
           </span>
         </div>
-        <CurrentPage />
+        <CurrentPage userEmail={currentUserEmail} />
       </main>
     </div>
   );
