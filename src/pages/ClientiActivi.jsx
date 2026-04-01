@@ -61,7 +61,6 @@ const EMPTY_FORM = {
   judet: "", localitate: "", strada: "", numar: "", bloc: "", scara: "",
   apartament: "", cod_postal: "",
   administrator_nume: "", administrator_cnp: "", administrator_ci_serie: "",
-  administrator_nume: "", administrator_cnp: "", administrator_ci_serie: "",
   administrator_ci_numar: "", administrator_ci_expirare: "",
   administrator_telefon: "", administrator_email: "",
   asociat1_nume: "", asociat1_cnp: "", asociat1_ci_serie: "",
@@ -960,8 +959,6 @@ function EvidentaActe({ client, onUpdate }) {
         created_at: new Date().toISOString(),
       };
       const evidenta_acte = [...(client.evidenta_acte || []), inregistrare];
-      const { updateDoc, doc } = await import("firebase/firestore");
-      const { db } = await import("../firebase");
       await updateDoc(doc(db, "clienti", client.id), { evidenta_acte });
       onUpdate({ ...client, evidenta_acte });
       setForm({
@@ -981,8 +978,6 @@ function EvidentaActe({ client, onUpdate }) {
     if (!window.confirm("Ștergi această înregistrare?")) return;
     try {
       const evidenta_acte = (client.evidenta_acte || []).filter(i => i.id !== id);
-      const { updateDoc, doc } = await import("firebase/firestore");
-      const { db } = await import("../firebase");
       await updateDoc(doc(db, "clienti", client.id), { evidenta_acte });
       onUpdate({ ...client, evidenta_acte });
     } catch(e) { alert("Eroare: " + e.message); }
