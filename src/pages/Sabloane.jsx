@@ -625,7 +625,6 @@ const LABELS_EXTRA = {
   suma_restanta:      "Suma restantă (RON)",
   nr_facturi:         "Număr facturi neachitate",
   termen_plata_final: "Termen limită plată",
-  data_notificare:    "Data notificării (ex: 25.04.2025)",
 };
 
 const CAT_COLOR = { "Contract":"blue","Act Adițional":"orange","Notificare":"red" };
