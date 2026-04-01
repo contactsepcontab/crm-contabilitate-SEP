@@ -83,13 +83,14 @@ const EMPTY_FORM = {
 // ============================================================
 // COMPONENTA PRINCIPALA
 // ============================================================
-export default function ClientiActivi() {
+export default function ClientiActivi({ userEmail = "" }) {
   const [clienti, setClienti] = useState([]);
   const [firme, setFirme] = useState([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
   const [filtruStatus, setFiltruStatus] = useState("Activ");
   const [filtruFirma, setFiltruFirma] = useState("");
+  const [utilizatorCurent, setUtilizatorCurent] = useState(null);
   const [modal, setModal] = useState(null);
   const [form, setForm] = useState(EMPTY_FORM);
   const [selectedClient, setSelectedClient] = useState(null);
@@ -113,6 +114,20 @@ export default function ClientiActivi() {
 
   useEffect(() => { reload(); }, []);
 
+  // Incarca rolul utilizatorului curent
+  useEffect(() => {
+    if (!userEmail) return;
+    getDocs(collection(db, "utilizatori")).then(snap => {
+      const u = snap.docs.map(d => ({ ...d.data(), id: d.id }))
+        .find(u => u.email?.toLowerCase() === userEmail?.toLowerCase());
+      setUtilizatorCurent(u || null);
+    }).catch(() => {});
+  }, [userEmail]);
+
+  // Filtrare bazata pe rol
+  const esteContabil = utilizatorCurent?.rol === "Contabil";
+  const numeContabil = utilizatorCurent?.nume || "";
+
   const filtered = clienti.filter(c => {
     const q = search.toLowerCase();
     const matchSearch = !q || c.denumire?.toLowerCase().includes(q) ||
@@ -120,7 +135,9 @@ export default function ClientiActivi() {
       c.contabil_responsabil?.toLowerCase().includes(q);
     const matchStatus = filtruStatus === "Toate" || c.status_client === filtruStatus;
     const matchFirma = !filtruFirma || c.firma_contabilitate_id === filtruFirma;
-    return matchSearch && matchStatus && matchFirma;
+    const matchContabil = !esteContabil || !numeContabil ||
+      c.contabil_responsabil?.toLowerCase().includes(numeContabil.toLowerCase());
+    return matchSearch && matchStatus && matchFirma && matchContabil;
   });
 
   const openAdd = () => { setForm(EMPTY_FORM); setModal("add"); };
@@ -202,9 +219,20 @@ export default function ClientiActivi() {
     <div className="p-6">
       <PageHeader
         title="Clienți Activi"
-        subtitle={`${clienti.filter(c => c.status_client === "Activ").length} activi din ${clienti.length} total`}
+        subtitle={esteContabil && numeContabil
+          ? `${filtered.length} clienți ai tăi (${numeContabil})`
+          : `${clienti.filter(c => c.status_client === "Activ").length} activi din ${clienti.length} total`}
         action={<Btn onClick={openAdd}>+ Adaugă Client</Btn>}
       />
+      {esteContabil && numeContabil && (
+        <div className="bg-indigo-50 border border-indigo-100 rounded-xl px-4 py-2.5 mb-4 flex items-center gap-2">
+          <span className="text-indigo-500 text-sm">👤</span>
+          <p className="text-xs text-indigo-700">
+            Ești logat ca <strong>Contabil</strong> — vezi doar clienții tăi ({numeContabil}).
+            <span className="ml-2 text-indigo-500">Adminii văd toți clienții.</span>
+          </p>
+        </div>
+      )}
 
       {/* Filtre */}
       <div className="flex gap-3 mb-5 flex-wrap">
@@ -630,6 +658,7 @@ export default function ClientiActivi() {
               { id: "contact", label: "Contact" },
               { id: "servicii", label: "Servicii & Tarife" },
               { id: "documente", label: `Documente (${selectedClient.documente?.length || 0})` },
+              { id: "evidenta", label: `Evidență Acte (${selectedClient.evidenta_acte?.length || 0})` },
               { id: "istoric", label: `Istoric (${selectedClient.istoric?.length || 0})` },
             ].map(tab => (
               <button
@@ -823,6 +852,16 @@ export default function ClientiActivi() {
             </div>
           )}
 
+          {activeTab === "evidenta" && (
+            <EvidentaActe
+              client={selectedClient}
+              onUpdate={(updated) => {
+                setSelectedClient(updated);
+                setClienti(prev => prev.map(c => c.id === updated.id ? updated : c));
+              }}
+            />
+          )}
+
           <div className="flex justify-between mt-5 pt-4 border-t border-gray-100">
             <Btn variant="danger" size="sm" onClick={() => handleDelete(selectedClient.id, selectedClient.denumire)}>
               Șterge clientul
@@ -876,6 +915,245 @@ function InfoRow({ label, value, bold }) {
     <div className="flex gap-3">
       <span className="text-xs text-gray-400 w-32 flex-shrink-0 pt-0.5">{label}</span>
       <span className={`text-sm text-gray-800 ${bold ? "font-semibold" : ""}`}>{value}</span>
+    </div>
+  );
+}
+
+// ============================================================
+// COMPONENTA EVIDENTA ACTE
+// ============================================================
+function EvidentaActe({ client, onUpdate }) {
+  const TIP_INTRARE = ["Acte primite", "Încasare cash", "Documente restituite", "Altele"];
+  const LUNI = ["Ianuarie","Februarie","Martie","Aprilie","Mai","Iunie",
+                "Iulie","August","Septembrie","Octombrie","Noiembrie","Decembrie"];
+  const AN_CURENT = new Date().getFullYear();
+
+  const [formDeschis, setFormDeschis] = useState(false);
+  const [saving, setSaving] = useState(false);
+  const [filtruTip, setFiltruTip] = useState("");
+  const [form, setForm] = useState({
+    data: new Date().toISOString().split("T")[0],
+    tip: "Acte primite",
+    luna_aferenta: `${LUNI[new Date().getMonth()]} ${AN_CURENT}`,
+    descriere: "",
+    suma: "",
+    acte_primite: "",
+    acte_restituite: "",
+    observatii: "",
+  });
+
+  const inregistrari = client.evidenta_acte || [];
+  const filtrate = filtruTip
+    ? inregistrari.filter(i => i.tip === filtruTip)
+    : inregistrari;
+  const sortate = [...filtrate].sort((a,b) => new Date(b.data) - new Date(a.data));
+
+  const handleSave = async () => {
+    if (!form.descriere && !form.acte_primite && !form.suma) {
+      return alert("Completează cel puțin descrierea, actele primite sau suma!");
+    }
+    setSaving(true);
+    try {
+      const inregistrare = {
+        ...form,
+        id: Date.now().toString(),
+        created_at: new Date().toISOString(),
+      };
+      const evidenta_acte = [...(client.evidenta_acte || []), inregistrare];
+      const { updateDoc, doc } = await import("firebase/firestore");
+      const { db } = await import("../firebase");
+      await updateDoc(doc(db, "clienti", client.id), { evidenta_acte });
+      onUpdate({ ...client, evidenta_acte });
+      setForm({
+        data: new Date().toISOString().split("T")[0],
+        tip: "Acte primite",
+        luna_aferenta: `${LUNI[new Date().getMonth()]} ${AN_CURENT}`,
+        descriere: "", suma: "", acte_primite: "", acte_restituite: "", observatii: "",
+      });
+      setFormDeschis(false);
+    } catch(e) {
+      alert("Eroare la salvare: " + e.message);
+    }
+    setSaving(false);
+  };
+
+  const handleDelete = async (id) => {
+    if (!window.confirm("Ștergi această înregistrare?")) return;
+    try {
+      const evidenta_acte = (client.evidenta_acte || []).filter(i => i.id !== id);
+      const { updateDoc, doc } = await import("firebase/firestore");
+      const { db } = await import("../firebase");
+      await updateDoc(doc(db, "clienti", client.id), { evidenta_acte });
+      onUpdate({ ...client, evidenta_acte });
+    } catch(e) { alert("Eroare: " + e.message); }
+  };
+
+  const TIP_STYLE = {
+    "Acte primite":        "bg-blue-50 border-blue-200 text-blue-800",
+    "Încasare cash":       "bg-green-50 border-green-200 text-green-800",
+    "Documente restituite":"bg-purple-50 border-purple-200 text-purple-800",
+    "Altele":              "bg-gray-50 border-gray-200 text-gray-700",
+  };
+  const TIP_ICON = {
+    "Acte primite": "📥",
+    "Încasare cash": "💵",
+    "Documente restituite": "📤",
+    "Altele": "📋",
+  };
+
+  return (
+    <div>
+      {/* Header + buton adaugare */}
+      <div className="flex items-center justify-between mb-4">
+        <div className="flex gap-1">
+          <button
+            onClick={() => setFiltruTip("")}
+            className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-colors ${!filtruTip ? "bg-indigo-600 text-white" : "bg-gray-100 text-gray-600 hover:bg-gray-200"}`}
+          >
+            Toate ({inregistrari.length})
+          </button>
+          {TIP_INTRARE.map(tip => {
+            const cnt = inregistrari.filter(i => i.tip === tip).length;
+            if (cnt === 0) return null;
+            return (
+              <button key={tip}
+                onClick={() => setFiltruTip(filtruTip === tip ? "" : tip)}
+                className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-colors ${filtruTip === tip ? "bg-indigo-600 text-white" : "bg-gray-100 text-gray-600 hover:bg-gray-200"}`}
+              >
+                {TIP_ICON[tip]} {tip} ({cnt})
+              </button>
+            );
+          })}
+        </div>
+        <button
+          onClick={() => setFormDeschis(!formDeschis)}
+          className="flex items-center gap-1.5 px-3 py-1.5 bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-semibold rounded-lg transition-colors"
+        >
+          {formDeschis ? "✕ Anulează" : "+ Adaugă înregistrare"}
+        </button>
+      </div>
+
+      {/* Formular adaugare */}
+      {formDeschis && (
+        <div className="bg-indigo-50 border border-indigo-100 rounded-xl p-4 mb-4">
+          <p className="text-xs font-bold text-indigo-700 mb-3">Înregistrare nouă</p>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+            <div>
+              <label className="block text-xs font-semibold text-gray-600 mb-1">Data <span className="text-red-500">*</span></label>
+              <input type="date" value={form.data} onChange={e => setForm(p => ({...p, data: e.target.value}))}
+                className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-indigo-400" />
+            </div>
+            <div>
+              <label className="block text-xs font-semibold text-gray-600 mb-1">Tip înregistrare <span className="text-red-500">*</span></label>
+              <select value={form.tip} onChange={e => setForm(p => ({...p, tip: e.target.value}))}
+                className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-indigo-400">
+                {TIP_INTRARE.map(t => <option key={t} value={t}>{TIP_ICON[t]} {t}</option>)}
+              </select>
+            </div>
+            <div>
+              <label className="block text-xs font-semibold text-gray-600 mb-1">Luna aferentă</label>
+              <input type="text" value={form.luna_aferenta}
+                onChange={e => setForm(p => ({...p, luna_aferenta: e.target.value}))}
+                placeholder="Ex: Martie 2025"
+                className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-indigo-400" />
+            </div>
+            {form.tip === "Încasare cash" && (
+              <div>
+                <label className="block text-xs font-semibold text-gray-600 mb-1">Suma încasată (RON)</label>
+                <input type="number" value={form.suma} onChange={e => setForm(p => ({...p, suma: e.target.value}))}
+                  placeholder="0"
+                  className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-indigo-400" />
+              </div>
+            )}
+            {form.tip === "Acte primite" && (
+              <div className="md:col-span-2">
+                <label className="block text-xs font-semibold text-gray-600 mb-1">Acte primite (ce documente au adus)</label>
+                <textarea value={form.acte_primite} onChange={e => setForm(p => ({...p, acte_primite: e.target.value}))}
+                  placeholder="Ex: Facturi emise ian 2025, extrase bancare, bon combustibil..."
+                  rows={2}
+                  className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-indigo-400 resize-none" />
+              </div>
+            )}
+            {form.tip === "Documente restituite" && (
+              <div className="md:col-span-2">
+                <label className="block text-xs font-semibold text-gray-600 mb-1">Documente restituite (ce le-ai dat înapoi)</label>
+                <textarea value={form.acte_restituite} onChange={e => setForm(p => ({...p, acte_restituite: e.target.value}))}
+                  placeholder="Ex: Dosar contabilitate ian 2025, stat salarii, raport TVA..."
+                  rows={2}
+                  className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-indigo-400 resize-none" />
+              </div>
+            )}
+            <div className="md:col-span-2">
+              <label className="block text-xs font-semibold text-gray-600 mb-1">Descriere / Observații</label>
+              <textarea value={form.descriere} onChange={e => setForm(p => ({...p, descriere: e.target.value}))}
+                placeholder="Detalii suplimentare..."
+                rows={2}
+                className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-indigo-400 resize-none" />
+            </div>
+          </div>
+          <div className="flex justify-end mt-3">
+            <button onClick={handleSave} disabled={saving}
+              className="px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white text-sm font-semibold rounded-lg disabled:opacity-50">
+              {saving ? "Se salvează..." : "Salvează înregistrarea"}
+            </button>
+          </div>
+        </div>
+      )}
+
+      {/* Lista inregistrari */}
+      {sortate.length === 0 ? (
+        <div className="text-center py-10 text-gray-400">
+          <p className="text-3xl mb-2">📋</p>
+          <p className="text-sm font-medium">Nu există înregistrări</p>
+          <p className="text-xs mt-1">Adaugă prima înregistrare de acte sau încasare</p>
+        </div>
+      ) : (
+        <div className="space-y-2">
+          {sortate.map(inreg => (
+            <div key={inreg.id} className={`border rounded-xl p-3.5 ${TIP_STYLE[inreg.tip] || TIP_STYLE["Altele"]}`}>
+              <div className="flex items-start justify-between gap-3">
+                <div className="flex items-start gap-2 flex-1">
+                  <span className="text-lg flex-shrink-0">{TIP_ICON[inreg.tip] || "📋"}</span>
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-center gap-2 flex-wrap mb-1">
+                      <span className="text-xs font-bold">{inreg.tip}</span>
+                      <span className="text-xs opacity-70">•</span>
+                      <span className="text-xs font-semibold">
+                        {new Date(inreg.data).toLocaleDateString("ro-RO", {day:"2-digit",month:"long",year:"numeric"})}
+                      </span>
+                      {inreg.luna_aferenta && (
+                        <>
+                          <span className="text-xs opacity-70">•</span>
+                          <span className="text-xs">Luna: <strong>{inreg.luna_aferenta}</strong></span>
+                        </>
+                      )}
+                      {inreg.suma && (
+                        <>
+                          <span className="text-xs opacity-70">•</span>
+                          <span className="text-xs font-bold">💵 {inreg.suma} RON</span>
+                        </>
+                      )}
+                    </div>
+                    {inreg.acte_primite && (
+                      <p className="text-xs mt-1"><span className="font-semibold">Acte primite:</span> {inreg.acte_primite}</p>
+                    )}
+                    {inreg.acte_restituite && (
+                      <p className="text-xs mt-1"><span className="font-semibold">Restituite:</span> {inreg.acte_restituite}</p>
+                    )}
+                    {inreg.descriere && (
+                      <p className="text-xs mt-1 opacity-80">{inreg.descriere}</p>
+                    )}
+                  </div>
+                </div>
+                <button onClick={() => handleDelete(inreg.id)}
+                  className="text-xs opacity-50 hover:opacity-100 flex-shrink-0 p-1 hover:bg-black/10 rounded transition-colors">
+                  🗑️
+                </button>
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
     </div>
   );
 }
